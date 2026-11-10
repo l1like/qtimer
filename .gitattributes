@@ -1,2 +1,18 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# 脚本与源码强制 LF，避免在 Windows 上编辑后 macOS/Linux 出现 "\r: command not found"
+*.sh      text eol=lf
+*.py      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.json    text eol=lf
+*.txt     text eol=lf
+
+# Windows PowerShell 脚本保持 CRLF 更稳妥
+*.ps1     text eol=crlf
+
+# 二进制资源不要做换行转换
+*.ico     binary
+*.icns    binary
+*.exe     binary

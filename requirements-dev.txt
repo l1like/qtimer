@@ -1,0 +1,13 @@
+# ============================================================
+# QTimer 开发 / 打包依赖（= 运行时依赖 + PyInstaller）
+#
+# 安装：.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+# 用法：.venv\Scripts\python.exe -m PyInstaller -F -w --clean --noconfirm -n QTimer main.py
+#
+# 注意：GitHub Actions（.github/workflows/build.yml）同样使用本文件安装依赖，
+#       请保持与 CI 构建流程一致，避免本地与 CI 产物出现差异。
+# ============================================================
+-r requirements.txt
+
+# 将程序打包为单文件 Windows EXE（与 CI 构建版本保持一致）
+pyinstaller==6.22.3

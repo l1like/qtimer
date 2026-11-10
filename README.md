@@ -1,6 +1,6 @@
 # ⏱️ QTimer - 极简流线型桌面悬浮计时器
 
-![Python Version](https://img.shields.io/badge/Python-3.7+-blue.svg)
+![Python Version](https://img.shields.io/badge/Python-3.10%20~%203.15-blue.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-Supported-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)
 ![High DPI](https://img.shields.io/badge/High%20DPI-4K%2F2K%20Ready-ff69b4.svg)
@@ -80,6 +80,186 @@
 
 直接下载预编译版本使用：
 [下载链接](https://github.com/Qwejay/QTimer/releases)
+
+---
+
+## 🛠️ 本地开发环境与打包 (Build from Source)
+
+不想使用预编译版本、希望自行运行或二次开发时，按下面步骤操作。仓库已内置依赖清单与自动化脚本，**一条命令即可完成环境初始化**。
+
+### 1. 环境要求
+
+| 项目 | 要求 | 本项目验证环境 |
+| --- | --- | --- |
+| 操作系统 | Windows 10 / 11；macOS 14+（打包需在对应系统上进行） | Windows 11 |
+| Python | **3.10 ~ 3.15**（PySide6 6.12 官方支持范围） | 3.14.7 |
+| PySide6 | 6.10 及以上 | 6.12.0 |
+| 磁盘空间 | 约 700 MB（虚拟环境 + PySide6） | — |
+
+> 仅运行程序时无需 PyInstaller；需要生成 `QTimer.exe` 时再安装开发依赖。
+
+### 2. 一键初始化环境（推荐）
+
+```powershell
+cd QTimer
+powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1
+```
+
+脚本会自动完成：检查 Python 版本 → 创建 `.venv` 虚拟环境 → 升级 pip → 安装 `requirements-dev.txt` → 导入 PySide6 验证环境。
+
+下载较慢时可指定国内镜像（仅本次生效，不修改全局 pip 配置）：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1 -Mirror tsinghua   # 或 aliyun
+```
+
+### 3. 运行程序
+
+```powershell
+.\scripts\run.ps1              # 前台运行，保留控制台便于查看日志
+.\scripts\run.ps1 -NoWindow    # 无控制台窗口运行（接近打包后的效果）
+```
+
+等价的手动命令：
+
+```powershell
+.\.venv\Scripts\python.exe main.py
+```
+
+### 4. 打包为可执行文件
+
+```powershell
+.\scripts\build.ps1            # 单文件版：dist\QTimer.exe
+.\scripts\build.ps1 -Onedir    # 目录版：dist\QTimer\QTimer.exe（启动更快，便于排查缺库）
+```
+
+构建参数与 `.github/workflows/build.yml` 完全一致：`-F -w --clean --noconfirm -n QTimer --icon=icon.ico --version-file=version.txt`。
+
+- `version.txt` 由 `scripts/gen_version_info.py` 自动从 `main.py` 的 `__version__` 生成，保证应用与 EXE 版本信息一致；发版时请一并提交。
+- 产物为单个 EXE（本机实测约 47 MB），目标机器无需安装 Python，双击即可运行。
+
+### 5. 打包为 macOS 应用（.app / .dmg）
+
+> macOS 版**必须在 macOS 上打包**（PyInstaller 不支持交叉编译）。日常发版推荐直接交给 GitHub Actions 自动出包。
+
+#### 方式一：GitHub Actions 自动出包（推荐）
+
+推送 `v*` 标签（或在 Actions 页面手动触发 `workflow_dispatch`）即可：
+
+```powershell
+git tag v1.4.0
+git push origin v1.4.0
+```
+
+workflow 会并行构建两个架构，并把产物附到 Release：
+
+| 产物 | 适用机型 |
+| --- | --- |
+| `QTimer_v<版本>_arm64.dmg` / `.zip` | Apple Silicon（M1/M2/M3/M4…） |
+| `QTimer_v<版本>_x86_64.dmg` / `.zip` | Intel Mac |
+
+构建矩阵：`macos-26`（arm64）+ `macos-26-intel`（x86_64），Python 3.13，采用 `--onedir --windowed`（PyInstaller 官方推荐 macOS 用 onedir，而非 onefile）。
+
+#### 方式二：在 Mac 本地打包
+
+```bash
+# 1) 环境（Python 3.10+；CI 使用 3.13）
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+
+# 2) 打包：生成 dist/QTimer.app、QTimer_v<版本>_<架构>.zip、.dmg
+bash scripts/build_macos.sh
+
+# 可选：通用二进制（Intel + Apple Silicon 单包，需要 universal2 版 Python）
+TARGET_ARCH=universal2 bash scripts/build_macos.sh
+
+# 可选：使用 Developer ID 证书签名（正式分发 / 公证时需要）
+CODESIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" bash scripts/build_macos.sh
+```
+
+脚本流程：检查依赖 → 从 `main.py` 读取版本号 → PyInstaller（`--onedir --windowed --icon=icon.icns`）→ 写入 `Info.plist` 版本 → 重新签名 → 生成 `.zip`（`ditto` 保留符号链接与权限）与 `.dmg`（内含 Applications 快捷方式），最后打印产物大小。
+
+本地产物 `dist/QTimer.app` 可直接双击运行；`.dmg` 可发给其他 Mac 安装。
+
+#### macOS 版注意事项
+
+- **最低系统版本：macOS 14（Sonoma）**。PySide6 6.12 的 macOS wheel 标签为 `macosx_14_0_universal2`，Qt 6.12 官方要求 macOS 14.4+；如需支持 macOS 13，请把 `requirements.txt` 中的 `PySide6` 降到 `6.11.3`（`macosx_13_0_universal2`）。
+- **默认是 ad-hoc 签名**：PyInstaller 6 会自动做 ad-hoc 签名，本机运行没问题；但用户从网络下载后，Gatekeeper 会提示「无法验证开发者」，需在「系统设置 → 隐私与安全性」点 **仍要打开**，或执行 `xattr -dr com.apple.quarantine /Applications/QTimer.app`。
+- **正式分发**建议走 Apple 公证：Developer ID Application 证书（`CODESIGN_IDENTITY`）签名 → `xcrun notarytool submit --wait` → `xcrun stapler staple`。注意 `.zip` 无法 staple，应分发公证后的 `.dmg`。
+- **全局热键**：macOS 默认不安装 `keyboard`（其 macOS 后端依赖 PyObjC/Quartz，且需要「辅助功能」授权），因此自动降级为 Qt 窗口快捷键；如需全局热键可自行 `pip install keyboard pyobjc` 并在系统设置中授权。
+- **功能差异**：PPT/WPS 全屏放映的自动开始/暂停检测是 Windows 专属功能（macOS 上该检测直接返回未激活），其余计时、提醒、样式功能两端一致。macOS 的默认中文字体自动切换为 `PingFang SC`。
+
+### 6. 手动步骤（不使用脚本时）
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python.exe main.py
+
+# 打包
+.\.venv\Scripts\python.exe scripts\gen_version_info.py --output version.txt
+.\.venv\Scripts\python.exe -m PyInstaller -F -w --clean --noconfirm -n QTimer --icon=icon.ico --version-file=version.txt main.py
+```
+
+macOS 手动命令：
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+python main.py
+
+# 打包（等价于 scripts/build_macos.sh 的核心步骤）
+python scripts/gen_version_info.py --print-version          # 取版本号
+python -m PyInstaller --noconfirm --clean --windowed --onedir \
+    --name QTimer --icon=icon.icns --osx-bundle-identifier com.qwejay.qtimer main.py
+codesign --force --deep --sign - dist/QTimer.app
+ditto -c -k --sequesterRsrc --keepParent dist/QTimer.app QTimer.zip
+hdiutil create -volname "QTimer" -srcfolder dist/QTimer.app -ov -format UDZO QTimer.dmg
+```
+
+### 7. 目录结构
+
+```
+main.py                      # 程序全部代码（单文件）
+requirements.txt             # 运行时依赖
+requirements-dev.txt         # 开发/打包依赖（含 PyInstaller）
+scripts/setup_env.ps1        # Windows：创建虚拟环境并安装依赖
+scripts/run.ps1              # Windows：本地启动程序
+scripts/build.ps1            # Windows：打包 EXE
+scripts/build_macos.sh       # macOS：打包 .app / .zip / .dmg
+scripts/gen_version_info.py  # 生成 Windows 版本资源 / 读取版本号
+version.txt                  # Windows EXE 版本/版权信息（自动生成，需提交）
+icon.ico                     # Windows 程序图标
+icon.icns                    # macOS 程序图标
+```
+
+### 8. 常见问题 (FAQ)
+
+**Q1：安装 PySide6 很慢或报 SSL 错误怎么办？**
+使用镜像：`.\scripts\setup_env.ps1 -Mirror tsinghua`；PySide6 会连带下载 Addons / WebEngine 等组件（合计约 200 MB），网络中断时 pip 会自动断点续传，重新执行同一命令即可。
+
+**Q2：可以只安装精简版 PySide6 吗？**
+本项目仅使用 `QtCore / QtGui / QtWidgets / QtSvg`（都在 PySide6-Essentials 中），把 `requirements.txt` 里的 `PySide6` 换成 `PySide6-Essentials` 可显著减小体积；但为与 CI 保持一致，默认安装完整版 `PySide6`。
+
+**Q3：配置文件保存在哪里？**
+Qt 的 `QStandardPaths::AppConfigLocation`，即 Windows 为 `%LOCALAPPDATA%\QTimer\config.json`，macOS 为 `~/Library/Preferences/QTimer/config.json`。删除该文件即可恢复默认配置。
+
+**Q4：没有安装 `keyboard` 模块会怎样？**
+不影响运行。程序检测不到 `keyboard` 时会自动降级为 Qt 窗口快捷键（仅窗口聚焦时生效），并在控制台打印提示。
+
+**Q5：运行脚本提示"禁止运行脚本"？**
+用 `powershell -ExecutionPolicy Bypass -File scripts\setup_env.ps1` 执行，或先运行 `Set-ExecutionPolicy -Scope Process Bypass`。
+
+**Q6：打包后的 EXE 被杀毒软件误报？**
+PyInstaller 单文件包偶发误报属常见现象。可改用 `.\scripts\build.ps1 -Onedir` 目录版，或为 EXE 添加代码签名 / 向厂商提交误报申诉。
+
+**Q7：如何在 PyCharm 中运行/调试？**
+将 `Settings → Project → Python Interpreter` 指向项目根目录的 `.venv\Scripts\python.exe`（本仓库的 `.idea` 已配置该解释器），然后直接运行/调试 `main.py` 即可。
+
+**Q8：macOS 版双击提示「已损坏，无法打开」怎么办？**
+这是未公证应用的 Gatekeeper 提示。执行 `xattr -dr com.apple.quarantine /Applications/QTimer.app` 即可；或右键 App → 打开。若准备长期分发，建议按上文配置 Developer ID 签名 + 公证。
 
 ---
 ## 💖 赞助支持 (Sponsorship)

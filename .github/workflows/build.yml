@@ -26,7 +26,10 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install PySide6 keyboard pyinstaller
+          pip install -r requirements-dev.txt
+
+      - name: Generate Version Info
+        run: python scripts/gen_version_info.py --output version.txt
 
       - name: Run PyInstaller
         shell: pwsh
@@ -80,17 +83,83 @@ jobs:
           path: out/*
           retention-days: 7
 
+  build-macos:
+    name: Build macOS App (${{ matrix.arch }})
+    # macOS 版必须在 macOS 上打包（PyInstaller 不支持交叉编译）。
+    # arm64：Apple Silicon；x86_64：Intel。两个产物均为 .app + .zip + .dmg。
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-26          # Apple Silicon
+            arch: arm64
+            setup_arch: arm64
+          - runner: macos-26-intel    # Intel x86_64（标准 runner，公有仓库免费）
+            arch: x86_64
+            setup_arch: x64
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'      # PySide6 6.12 支持 Python 3.10 ~ 3.15
+          architecture: ${{ matrix.setup_arch }}
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+
+      - name: Build .app / .dmg / .zip
+        env:
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: bash scripts/build_macos.sh
+
+      - name: Show Artifacts
+        run: ls -lh dist/*.dmg dist/*.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: QTimer-macOS-${{ matrix.arch }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          retention-days: 7
+
   release:
     name: Create GitHub Release
-    needs: build
+    needs: [build, build-macos]
+    # 只在推送 v* 标签时创建 Release；手动 workflow_dispatch 只构建并上传产物，
+    # 方便验证 macOS 打包而不会产生多余的 Release。
+    if: always() && needs.build.result == 'success' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     
     steps:
-      - name: Download Artifact
+      - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
           name: QTimer-Build-Asset
           path: ./release_files
+
+      - name: Download macOS Artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: QTimer-macOS-*
+          path: ./release_files
+          merge-multiple: true
+
+      - name: Generate macOS Checksums
+        continue-on-error: true
+        run: |
+          cd release_files
+          shasum -a 256 *.dmg *.zip > sha256sum-macos.txt 2>/dev/null || true
+          cat sha256sum-macos.txt
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -101,10 +170,21 @@ jobs:
             ## 🚀 QTimer ${{ github.ref_name }}
             
             ### 📦 下载链接
-            - **绿色便携包**: `QTimer_${{ github.ref_name }}.zip` 
+            - **Windows 绿色便携包**: `QTimer_${{ github.ref_name }}.zip` 
+            - **macOS Apple Silicon (M 系列)**: `QTimer_v*_arm64.dmg` / `.zip`
+            - **macOS Intel (x86_64)**: `QTimer_v*_x86_64.dmg` / `.zip`
+            
+            ### 🍎 macOS 安装说明
+            1. 下载对应芯片的 `.dmg`，双击打开后把 **QTimer** 拖入「应用程序」；
+            2. 首次打开若提示「无法验证开发者」，请在「系统设置 → 隐私与安全性」中点击 **仍要打开**，
+               或执行 `xattr -dr com.apple.quarantine /Applications/QTimer.app`；
+            3. 支持 **macOS 14（Sonoma）及以上**（PySide6 6.12 / Qt 6.12 的最低系统要求）。
+            
+            > macOS 版为 ad-hoc 签名（未做 Apple 公证），因此首次启动需要手动放行。
             
             ### 🔒 文件校验 (SHA-256)
-            您可以查阅附件中的 `sha256sum.txt` 校验下载包的完整性。
+            - Windows：附件中的 `sha256sum.txt`
+            - macOS：附件中的 `sha256sum-macos.txt`
             
             ---
             *此 Release 由 GitHub Actions 自动打包发布。*

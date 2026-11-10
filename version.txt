@@ -1,0 +1,34 @@
+# UTF-8
+# 由 scripts/gen_version_info.py 自动生成，请勿手动修改。
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 4, 0, 0),
+    prodvers=(1, 4, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0),
+  ),
+  kids=[
+    StringFileInfo(
+      [
+        StringTable(
+          '080404b0',
+          [
+            StringStruct('CompanyName', 'QwejayHuang'),
+            StringStruct('FileDescription', '一款极简风格计时器'),
+            StringStruct('FileVersion', '1.4.0'),
+            StringStruct('InternalName', 'QTimer'),
+            StringStruct('LegalCopyright', 'Copyright (C) 2026 QwejayHuang. GPL-3.0'),
+            StringStruct('OriginalFilename', 'QTimer.exe'),
+            StringStruct('ProductName', 'QTimer'),
+            StringStruct('ProductVersion', '1.4.0'),
+          ],
+        )
+      ]
+    ),
+    VarFileInfo([VarStruct('Translation', [2052, 1200])]),
+  ],
+)

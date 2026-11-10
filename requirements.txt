@@ -1,0 +1,19 @@
+# ============================================================
+# QTimer 运行时依赖
+#
+# 安装：.venv\Scripts\python.exe -m pip install -r requirements.txt
+# 已验证：Windows 11 + Python 3.14.7 + PySide6 6.12.0（pip check 通过）
+#
+# 说明：本文件只包含「运行程序」必需的依赖；
+#       需要打包 EXE 时请改用 requirements-dev.txt。
+# ============================================================
+
+# Qt for Python 图形界面框架（PySide6 6.12 官方支持 Python 3.10 ~ 3.15）。
+# 主程序当前只用到 QtCore / QtGui / QtWidgets / QtSvg 四个模块。
+PySide6==6.12.0
+
+# 全局热键支持（可选依赖）。
+# 已安装：PPT 全屏等窗口失焦时依然可以触发快捷键；
+# 未安装：main.py 自动降级为 Qt 窗口快捷键（窗口聚焦时生效），程序正常运行。
+# keyboard 仅支持 Windows / Linux，macOS 不安装即可自动降级。
+keyboard==0.13.5; sys_platform != "darwin"

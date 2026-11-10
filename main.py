@@ -16,6 +16,17 @@ from PySide6.QtGui import *
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import *
 
+def _log(message: str) -> None:
+    """诊断输出。窗口模式（pythonw / PyInstaller -w / macOS .app）下
+    sys.stdout 与 sys.stderr 均为 None，此时静默忽略，避免启动即崩溃。"""
+    stream = sys.stderr or sys.stdout
+    if stream is None:
+        return
+    try:
+        print(message, file=stream)
+    except Exception:
+        pass  # 控制台编码不支持（如 GBK）时不影响程序运行
+
 __app_name__ = "QTimer"
 __version__ = "1.4.0"
 __author__ = "QwejayHuang"
@@ -25,9 +36,9 @@ __description__ = "一款极简风格计时器"
 try:
     import keyboard
     HAS_KEYBOARD = True
-except ImportError:
+except Exception:
     HAS_KEYBOARD = False
-    print("💡 提示：推荐执行 'pip install keyboard' 以启用真正的全局热键支持。")
+    _log("[提示] 未启用全局热键（可执行 'pip install keyboard' 启用），已回退为 Qt 窗口快捷键。")
 
 def get_app_dir() -> str:
     if getattr(sys, 'frozen', False):
@@ -44,7 +55,13 @@ def get_config_path() -> str:
     return os.path.join(loc, "config.json")
 
 CONFIG_PATH = get_config_path()
-WNDENUMPROC_TYPE = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+# 各平台默认中文字体（可在设置中修改；配置文件中已保存的字体优先）
+DEFAULT_FONT = "PingFang SC" if platform.system() == "Darwin" else "微软雅黑"
+if platform.system() == "Windows":
+    WNDENUMPROC_TYPE = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
+else:
+    # ctypes.WINFUNCTYPE 仅存在于 Windows；非 Windows 平台不会用到窗口枚举回调
+    WNDENUMPROC_TYPE = None
 
 def is_ppt_slideshow_active() -> bool:
     if platform.system() != "Windows":
@@ -78,7 +95,7 @@ def is_ppt_slideshow_active() -> bool:
         ctypes.windll.user32.EnumWindows(WNDENUMPROC_TYPE(enum_cb), 0)
         return active[0]
     except Exception as e:
-        print(f"PPT检测异常: {e}")
+        _log(f"PPT检测异常: {e}")
         return False
 
 def play_alert_sound(file_path: str = "", duration_ms: int = 200) -> None:
@@ -205,9 +222,9 @@ class Config:
         self.stages: list[Stage] = [Stage("说课时间", 5, "分", False), Stage("答辩时间", 2, "分", False)]
         self.alerts: list[Alert] = [Alert(30, "#ffaa00", True), Alert(10, "#ff4444", True)]
         self.color: str = "#ffffff"
-        self.font: str = "微软雅黑"
+        self.font: str = DEFAULT_FONT
         self.font_size: int = 32
-        self.stage_font: str = "微软雅黑"
+        self.stage_font: str = DEFAULT_FONT
         self.stage_font_size: int = 18
         self.bg_color: str = "#141414"
         self.global_transparency: int = 5       
@@ -276,7 +293,7 @@ class Config:
             if "alerts" in d:
                 self.alerts = [Alert.from_dict(a) for a in d["alerts"] if isinstance(a, dict)]
         except Exception as e:
-            print(f"加载配置失败，将使用默认值: {e}")
+            _log(f"加载配置失败，将使用默认值: {e}")
 
     def bg_qcolor(self) -> QColor:
         c = QColor(self.bg_color)
@@ -417,9 +434,9 @@ class FloatBar(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self._drag_pos = None
         self._text_color = "#ffffff"
-        self._font_family = "微软雅黑"
+        self._font_family = DEFAULT_FONT
         self._font_size = 32
-        self._stage_font_family = "微软雅黑"
+        self._stage_font_family = DEFAULT_FONT
         self._stage_font_size = 18
         self._bg_color = QColor(20, 20, 20, 210)
         self._show_stage_label = True
