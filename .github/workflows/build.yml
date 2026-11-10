@@ -187,6 +187,11 @@ jobs:
             - macOS：附件中的 `sha256sum-macos.txt`
             
             ---
+            
+            ### ⚠️ 关于本版本
+            本包由第三方基于 **[Qwejay/QTimer](https://github.com/Qwejay/QTimer)**（作者 **QwejayHuang**）打包，属 **非官方二次分发版本**，与原作者无隶属或合作关系，不代表原作者立场。
+            项目遵循 **GNU GPL v3.0**，版权归原作者所有；如原作者认为本仓库或其产物分发不妥，请通过 Issues 联系，我们将立即删除相关仓库、Release 及全部预编译产物并停止分发。
+            
             *此 Release 由 GitHub Actions 自动打包发布。*
           generate_release_notes: true
           draft: false

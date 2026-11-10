@@ -1,5 +1,16 @@
 # ⏱️ QTimer - 极简流线型桌面悬浮计时器
 
+> **⚠️ 关于本仓库（请先阅读）**
+>
+> 本仓库是原项目 **[Qwejay/QTimer](https://github.com/Qwejay/QTimer)** 的 **macOS 打包版（非官方二次分发）**。
+>
+> - **原作者 / 版权持有人**：[QwejayHuang](https://github.com/Qwejay) · 原项目地址：<https://github.com/Qwejay/QTimer>
+> - **本仓库只做一件事**：为 macOS 用户提供开箱即用的预编译安装包（`.dmg` / `.zip`），并补充 macOS 兼容性修复与打包脚本。**软件功能、界面与代码主体均来自原项目**，未做功能性改动或商业化。
+> - **与原作者无关**：本仓库由第三方维护，与原作者无隶属、合作或背书关系，不代表原作者立场；使用中遇到问题请优先到原项目反馈。
+> - **许可证**：原项目与本仓库均遵循 [GNU GPL v3.0](LICENSE)，分发时保留原始版权声明与许可证文本。
+> - **侵权即删**：若原作者认为本仓库的存在或分发方式不妥，请通过 [Issues](https://github.com/l1like/qtimer/issues) 联系，**收到通知后 24 小时内删除仓库、Release 及全部预编译产物，并停止一切分发**。
+> - **官方版本**：Windows 版请使用原项目官方发布：<https://github.com/Qwejay/QTimer/releases>
+
 ![Python Version](https://img.shields.io/badge/Python-3.10%20~%203.15-blue.svg)
 ![PyQt5](https://img.shields.io/badge/PyQt5-Supported-brightgreen.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)
@@ -78,8 +89,9 @@
 
 ## 🚀 快速上手 (Quick Start)
 
-直接下载预编译版本使用：
-[下载链接](https://github.com/Qwejay/QTimer/releases)
+- **macOS 用户（Apple Silicon / Intel）**：下载本仓库的预编译安装包 —— [本仓库 Releases](https://github.com/l1like/qtimer/releases)（`QTimer_v*_arm64.dmg` / `QTimer_v*_x86_64.dmg`）
+- **Windows 用户**：请使用原项目官方发布 —— [Qwejay/QTimer Releases](https://github.com/Qwejay/QTimer/releases)
+- **源码与最新更新**：以原项目 [Qwejay/QTimer](https://github.com/Qwejay/QTimer) 为准
 
 ---
 
@@ -275,5 +287,11 @@ QTimer 是一款完全开源且免费的项目，由作者利用业余时间开�
 ## 📄 开源协议 (License)
 
 本项目基于 [GNU General Public License v3.0](LICENSE) 开源，允许在遵循协议条款的前提下自由分发、修改和二次开发。
+
+> **版权归属**：QTimer 的著作权归原作者 **QwejayHuang** 所有。本仓库仅是其 **macOS 打包/二次分发版本**，在原项目基础上补充了 macOS 兼容性修复、打包脚本与 CI 工作流，未改变软件的授权方式，仍以 GPLv3 对外分发，并完整保留原版权声明与许可证文本。
+
+> **侵权处理（Notice & Takedown）**：本仓库为个人非商业性质的分发，**若原作者或任何权利人认为本仓库、其 Release 产物或分发方式侵犯了您的权益，请通过 [Issues](https://github.com/l1like/qtimer/issues) 联系我们，我们将在收到通知后 24 小时内删除相关仓库、Release 及全部预编译产物，并停止一切分发**。在收到通知前，本仓库不对原作者的立场、支持或背书作任何暗示。
+
+> **致谢**：感谢原作者 QwejayHuang 开源并持续维护 QTimer。
 
 <p align="right">Copyright (C) 2026 QwejayHuang.</p>
