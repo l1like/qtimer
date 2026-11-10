@@ -112,7 +112,25 @@ VSVersionInfo(
     )
 
 
+def ensure_utf8_stdio() -> None:
+    """确保标准输出为 UTF-8。
+
+    GitHub Actions 的 windows-2022 runner 使用 en-US 区域设置，管道 stdout 默认
+    cp1252，直接打印中文状态信息会抛 UnicodeEncodeError 导致 CI 步骤失败。
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+
+
 def main(argv=None) -> int:
+    ensure_utf8_stdio()
+
     parser = argparse.ArgumentParser(description="生成 PyInstaller --version-file 资源文件")
     parser.add_argument("-o", "--output", default=str(DEFAULT_OUTPUT), help="输出文件路径（默认 version.txt）")
     parser.add_argument("--main-py", default=str(MAIN_PY), help="main.py 路径（默认项目根目录）")
